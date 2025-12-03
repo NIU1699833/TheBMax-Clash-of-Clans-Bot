@@ -2,12 +2,13 @@ import time as t
 import pyautogui as gui
 import pygetwindow as gw
 import random
-import pyscreeze
-from PIL import Image
 import pytesseract
-from sympy import false
+import math as m
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+lightningLevel = 10
+lightningCapacity = 11
 
 def recogniseState():
     foundState = 0
@@ -24,10 +25,10 @@ def recogniseState():
             return foundState
         except gui.ImageNotFoundException:
             continue
-        if foundState == 0:
-            return "unknown"
-        else:
-            return foundState
+    if foundState == 0:
+        return "unknown"
+    else:
+        return foundState
 
 def focusBluestacks():
     gw.getWindowsWithTitle("BlueStacks App Player")[0].activate()
@@ -37,6 +38,7 @@ def basicAttack():
     dragonPositions = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "q"]
     hotkeys = ["2", "3", "4", "5", "6"]
     heroPositions = ["a", "d", "g", "j", "l"]
+    airDefense(lightningLevel, lightningCapacity)
     gui.press("1")
     for i in dragonPositions:
         gui.press(i)
@@ -68,6 +70,29 @@ def goldAmount():
     else:
         return int(gold)
 
+def airDefense(lightningLevel, lightningCapacity):
+    lightningDamage = [150, 180, 210, 240, 270, 320, 400, 480, 560, 600, 640, 680, 720]
+    airDefenseHealth = [800, 850, 900, 950, 1000, 1050, 1100, 1210, 1300, 1400, 1500, 1650, 1750, 1850, 1950, 2000]
+    lowestLevelNotFound = 0
+    while (lightningCapacity > 0) and (lowestLevelNotFound < 15):
+        for defense in range(1, 16):
+            lowestLevelNotFound = 0
+            try:
+                x, y = gui.locateCenterOnScreen(f"images/airDefense/level{defense}.png", confidence=0.9)
+                print(f"Found Air Defense level {defense} at {x}, {y}")
+                lightningNeeded = m.ceil(airDefenseHealth[defense] / lightningDamage[lightningLevel - 1])
+                print(f"Deploying {lightningNeeded} lightning spells at {x}, {y}")
+                gui.press("7")
+                for spell in range(1, lightningNeeded + 1):
+                    gui.click(x, y)
+                    randomSleep(0.25)
+                    lightningCapacity -= 1
+                break
+            except gui.ImageNotFoundException:
+                lowestLevelNotFound += 1
+                print(f"Couldn't find air defense level {defense}")
+                continue
+
 def mainLoop():
     focusBluestacks()
     while True:
@@ -89,4 +114,7 @@ def mainLoop():
             case "unknown":
                 print("Waiting for known state...")
         randomSleep(1)
+
 mainLoop()
+
+
