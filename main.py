@@ -75,8 +75,8 @@ def airDefense(lightningLevel, lightningCapacity):
     airDefenseHealth = [800, 850, 900, 950, 1000, 1050, 1100, 1210, 1300, 1400, 1500, 1650, 1750, 1850, 1950, 2000]
     lowestLevelNotFound = 0
     while (lightningCapacity > 0) and (lowestLevelNotFound < 15):
+        lowestLevelNotFound = 0
         for defense in range(1, 16):
-            lowestLevelNotFound = 0
             try:
                 x, y = gui.locateCenterOnScreen(f"images/airDefense/level{defense}.png", confidence=0.9)
                 print(f"Found Air Defense level {defense} at {x}, {y}")
@@ -92,10 +92,26 @@ def airDefense(lightningLevel, lightningCapacity):
                 lowestLevelNotFound += 1
                 print(f"Couldn't find air defense level {defense}")
                 continue
+        print(lowestLevelNotFound)
+
+def detectFullStorages():
+    try:
+        gui.locateOnScreen("images/goldStorage.png", confidence=0.9)
+        print("Gold Storage Full. Checking Elixir Storage.")
+        try:
+            gui.locateOnScreen("images/elixirStorage.png", confidence=0.9)
+            print("Elixir Storage is also full. Stopping script (to be replaced with switch account).")
+            return 0
+        except:
+            print("Elixir Storage is not full. Proceeding to attack .")
+            return 1
+    except:
+        print("Gold Storage is not full. Proceeding to attack loop.")
+        return 1
 
 def mainLoop():
     focusBluestacks()
-    while True:
+    while detectFullStorages() == 1:
         currentStatus = recogniseState()
         match currentStatus:
             case "homeScreen":
@@ -116,5 +132,3 @@ def mainLoop():
         randomSleep(1)
 
 mainLoop()
-
-
