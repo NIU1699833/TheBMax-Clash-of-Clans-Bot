@@ -5,36 +5,29 @@ import random
 import pyscreeze
 from PIL import Image
 import pytesseract
+from sympy import false
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def recogniseState():
-    try:
-        gui.locateOnScreen("images/homeAttack.png", confidence=0.9)
-        print("Current Status: Home Screen")
-        return "homeScreen"
-    except gui.ImageNotFoundException:
+    foundState = 0
+    states = {"homeScreen": "images/homeAttack.png",
+              "findMatch": "images/findMatch.png",
+              "attackButton": "images/startAttack.png",
+              "inAttack": "images/nextEnemy.png",
+              "attackFinished": "images/returnHome.png"}
+    for state in states:
         try:
-            gui.locateOnScreen("images/findMatch.png", confidence=0.9)
-            print("Current Status: Find a Match Button")
-            return "findMatch"
+            gui.locateOnScreen(states[state], confidence=0.9)
+            print("Current Status: " + state)
+            foundState = state
+            return foundState
         except gui.ImageNotFoundException:
-            try:
-                gui.locateOnScreen("images/startAttack.png", confidence=0.9)
-                print("Current Status: Attack Button")
-                return "attackButton"
-            except gui.ImageNotFoundException:
-                try:
-                    gui.locateOnScreen("images/nextEnemy.png", confidence=0.9)
-                    print("Current Status: In Attack")
-                    return "inAttack"
-                except gui.ImageNotFoundException:
-                    try:
-                        gui.locateOnScreen("images/returnHome.png", confidence=0.9)
-                        print("Current Status: Attack Finished")
-                        return "attackFinished"
-                    except gui.ImageNotFoundException:
-                        print("Unknown State")
-                        return "unknown"
+            continue
+        if foundState == 0:
+            return "unknown"
+        else:
+            return foundState
 
 def focusBluestacks():
     gw.getWindowsWithTitle("BlueStacks App Player")[0].activate()
@@ -70,7 +63,10 @@ def goldAmount():
     f = filter(str.isdecimal, gold)
     gold = "".join(f)
     print("Found village with " + gold + " gold.")
-    return int(gold)
+    if gold == "":
+        return 0
+    else:
+        return int(gold)
 
 def mainLoop():
     focusBluestacks()
@@ -93,5 +89,4 @@ def mainLoop():
             case "unknown":
                 print("Waiting for known state...")
         randomSleep(1)
-
 mainLoop()
