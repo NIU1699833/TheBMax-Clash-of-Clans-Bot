@@ -5,6 +5,8 @@ import random
 import pytesseract
 import math as m
 
+from tifffile.tifffile import sequence
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 PROFILES = {
@@ -98,9 +100,6 @@ PROFILES = {
     }
 }
 
-currentProfile = "TheBMax11"
-profileData = PROFILES[currentProfile]
-
 def recogniseState():
     foundState = 0
     states = {"homeScreen": "images/homeAttack.png",
@@ -128,6 +127,9 @@ def focusBluestacks():
 def basicAttack(profileData):
     positions = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "q"]
     heroPositions = ["a", "d", "g", "j", "l"]
+    gui.keyDown("o")
+    randomSleep(0.5)
+    gui.keyUp("o")
     airDefense(profileData["lightningLevel"], profileData["lightningCapacity"], profileData)
     for troop in profileData["troopBinds"]:
         gui.press(troop)
@@ -192,26 +194,66 @@ def detectFullStorages():
     else:
         return 1
 
-def mainLoop():
-    focusBluestacks()
-    while detectFullStorages() == 1:
-        currentStatus = recogniseState()
-        match currentStatus:
-            case "homeScreen":
-                gui.press("z")
-            case "findMatch":
-                gui.press("x")
-            case "attackButton":
-                gui.press("c")
-            case "inAttack":
-                if goldAmount() > profileData["minGold"]:
-                    basicAttack(profileData)
-                else:
-                    gui.press("b")
-            case "attackFinished":
-                gui.press("v")
-            case "unknown":
-                print("Waiting for known state...")
-        randomSleep(1)
+def waitToFind(imagePath):
+    found = False
+    while not found:
+        try:
+            gui.locateOnScreen(imagePath, confidence=0.9)
+            found = True
+        except gui.ImageNotFoundException:
+            print("Could not find. Waiting one second.")
+            randomSleep(1)
 
+def switchAccounts(desiredProfile):
+    found = False
+    waitToFind("images/homeAttack.png")
+    gui.press("n")
+    randomSleep(0.5)
+    gui.press("m")
+    waitToFind("images/switchAccountMenu.png")
+    randomSleep(1)
+
+    found = False
+    while not found:
+        try:
+            x, y = gui.locateCenterOnScreen(f"images/profiles/{desiredProfile}.png", confidence=0.9)
+            gui.moveTo((x, y))
+            gui.click(x, y)
+            found = True
+        except gui.ImageNotFoundException:
+            gui.press("p")
+            gui.press("p")
+            gui.press("p")
+            randomSleep(0.5)
+            continue
+def mainLoop():
+    accountNumber = 1
+    focusBluestacks()
+    while accountNumber <= 11:
+        switchAccounts(f"TheBMax{accountNumber}")
+        profileData = PROFILES[f"TheBMax{accountNumber}"]
+        print(f"Attacking on profile TheBMax{accountNumber}")
+        while detectFullStorages() == 1:
+            currentStatus = recogniseState()
+            match currentStatus:
+                case "homeScreen":
+                    gui.press("z")
+                case "findMatch":
+                    gui.press("x")
+                case "attackButton":
+                    gui.press("c")
+                case "inAttack":
+                    if goldAmount() > profileData["minGold"]:
+                        basicAttack(profileData)
+                    else:
+                        gui.press("b")
+                case "attackFinished":
+                    gui.press("v")
+                case "unknown":
+                    print("Waiting for known state...")
+            randomSleep(1)
+        accountNumber += 1
+
+
+focusBluestacks()
 mainLoop()
