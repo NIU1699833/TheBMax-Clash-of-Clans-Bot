@@ -7,8 +7,99 @@ import math as m
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-lightningLevel = 10
-lightningCapacity = 11
+PROFILES = {
+    "TheBMax1": {
+        "minGold": 750000,
+        "lightningLevel": 10,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3", "4"],
+        "heroBinds": ["5", "6", "7", "8", "9"],
+        "spellBind": "0"
+    },
+    "TheBMax2": {
+        "minGold": 750000,
+        "lightningLevel": 9,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5", "6", "7", "8"],
+        "spellBind": "9"
+    },
+    "TheBMax3": {
+        "minGold": 750000,
+        "lightningLevel": 9,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3", "4"],
+        "heroBinds": ["5", "6", "7", "8", "9"],
+        "spellBind": "0"
+    },
+    "TheBMax4": {
+        "minGold": 750000,
+        "lightningLevel": 9,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5", "6", "7", "8"],
+        "spellBind": "9"
+    },
+    "TheBMax5": {
+        "minGold": 750000,
+        "lightningLevel": 9,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5", "6", "7", "8"],
+        "spellBind": "9"
+    },
+    "TheBMax6": {
+        "minGold": 750000,
+        "lightningLevel": 9,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5", "6", "7"],
+        "spellBind": "8"
+    },
+    "TheBMax7": {
+        "minGold": 500000,
+        "lightningLevel": 8,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3", "4"],
+        "heroBinds": ["4", "5", "6", "7", "8"],
+        "spellBind": "9"
+    },
+    "TheBMax8": {
+        "minGold": 500000,
+        "lightningLevel": 7,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3", "4"],
+        "heroBinds": ["5", "6", "7"],
+        "spellBind": "8"
+    },
+    "TheBMax9": {
+        "minGold": 500000,
+        "lightningLevel": 7,
+        "lightningCapacity": 11,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5"],
+        "spellBind": "6"
+    },
+    "TheBMax10": {
+        "minGold": 250000,
+        "lightningLevel": 6,
+        "lightningCapacity": 9,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4", "5"],
+        "spellBind": "6"
+    },
+    "TheBMax11": {
+        "minGold": 250000,
+        "lightningLevel": 5,
+        "lightningCapacity": 7,
+        "troopBinds": ["1", "2", "3"],
+        "heroBinds": ["4"],
+        "spellBind": "5"
+    }
+}
+
+currentProfile = "TheBMax11"
+profileData = PROFILES[currentProfile]
 
 def recogniseState():
     foundState = 0
@@ -34,23 +125,23 @@ def focusBluestacks():
     gw.getWindowsWithTitle("BlueStacks App Player")[0].activate()
     randomSleep(2)
 
-def basicAttack():
-    dragonPositions = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "q"]
-    hotkeys = ["2", "3", "4", "5", "6"]
+def basicAttack(profileData):
+    positions = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "q"]
     heroPositions = ["a", "d", "g", "j", "l"]
-    airDefense(lightningLevel, lightningCapacity)
-    gui.press("1")
-    for i in dragonPositions:
-        gui.press(i)
-        randomSleep(0.5)
+    airDefense(profileData["lightningLevel"], profileData["lightningCapacity"], profileData)
+    for troop in profileData["troopBinds"]:
+        gui.press(troop)
+        for i in positions:
+            gui.press(i)
+            randomSleep(0.5)
     currentPosition = 0
-    for i in hotkeys:
+    for i in profileData["heroBinds"]:
         gui.press(i)
         randomSleep(0.25)
         gui.press(heroPositions[currentPosition])
         randomSleep(0.5)
         currentPosition += 1
-    gui.press("7")
+    gui.press(profileData["spellBind"])
     for loop in range(11):
         randomSleep(0.1)
         gui.press("w")
@@ -70,7 +161,7 @@ def goldAmount():
     else:
         return int(gold)
 
-def airDefense(lightningLevel, lightningCapacity):
+def airDefense(lightningLevel, lightningCapacity, data):
     lightningDamage = [150, 180, 210, 240, 270, 320, 400, 480, 560, 600, 640, 680, 720]
     airDefenseHealth = [800, 850, 900, 950, 1000, 1050, 1100, 1210, 1300, 1400, 1500, 1650, 1750, 1850, 1950, 2000]
     lowestLevelNotFound = 0
@@ -82,7 +173,7 @@ def airDefense(lightningLevel, lightningCapacity):
                 print(f"Found Air Defense level {defense} at {x}, {y}")
                 lightningNeeded = m.ceil(airDefenseHealth[defense] / lightningDamage[lightningLevel - 1])
                 print(f"Deploying {lightningNeeded} lightning spells at {x}, {y}")
-                gui.press("7")
+                gui.press(data["spellBind"])
                 for spell in range(1, lightningNeeded + 1):
                     gui.click(x, y)
                     randomSleep(0.25)
@@ -95,18 +186,10 @@ def airDefense(lightningLevel, lightningCapacity):
         print(lowestLevelNotFound)
 
 def detectFullStorages():
-    try:
-        gui.locateOnScreen("images/goldStorage.png", confidence=0.9)
-        print("Gold Storage Full. Checking Elixir Storage.")
-        try:
-            gui.locateOnScreen("images/elixirStorage.png", confidence=0.9)
-            print("Elixir Storage is also full. Stopping script (to be replaced with switch account).")
-            return 0
-        except:
-            print("Elixir Storage is not full. Proceeding to attack .")
-            return 1
-    except:
-        print("Gold Storage is not full. Proceeding to attack loop.")
+    if gui.pixelMatchesColor(1474, 83, (244, 221, 114)) and gui.pixelMatchesColor(1474, 173, (225, 141, 225)):
+        print("Gold and Elixir Storages are full. Going Idle / Switching Accounts")
+        return 0
+    else:
         return 1
 
 def mainLoop():
@@ -121,8 +204,8 @@ def mainLoop():
             case "attackButton":
                 gui.press("c")
             case "inAttack":
-                if goldAmount() > 750000:
-                    basicAttack()
+                if goldAmount() > profileData["minGold"]:
+                    basicAttack(profileData)
                 else:
                     gui.press("b")
             case "attackFinished":
