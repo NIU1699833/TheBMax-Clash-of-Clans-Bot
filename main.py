@@ -173,6 +173,26 @@ def closeBluestacks():
     else:
         print("Bluestacks is not open!")
 
+def recogniseProfile():
+    found = False
+    currentProfile = 1
+    waitToFind("images/homeAttack.png")
+    gui.press("n")
+    waitToFind("images/settingsMenu.png")
+    randomSleep(0.5)
+    while not found and currentProfile <= 10:
+        try:
+            x, y = gui.locateCenterOnScreen(f"images/smallProfiles/TheBMax{currentProfile}.png", confidence=0.9)
+            print(f"Current profile is TheBMax{currentProfile}")
+            gui.press("j")
+            return currentProfile
+        except gui.ImageNotFoundException:
+            currentProfile += 1
+            continue
+    if not found:
+        print(f"CRITICAL: Could not detect what profile we are on. Stopping script (in future, add logic to restart game)")
+        return 0
+
 
 def attackLoop(profileData):
     while detectFullStorages() == 1:
@@ -205,12 +225,15 @@ def mainLoop():
     endAccount = 10
     accountNumber = startAccount
     focusBluestacks()
-    while accountNumber <= endAccount:
+    if recogniseProfile() != accountNumber:
         switchAccounts(f"TheBMax{accountNumber}")
+    while accountNumber <= endAccount:
         profileData = PROFILES[f"TheBMax{accountNumber}"]
         print(f"Attacking on profile TheBMax{accountNumber}")
         randomSleep(5)
         attackLoop(profileData)
         accountNumber += 1
+        if accountNumber <= endAccount:
+            switchAccounts(f"TheBMax{accountNumber}")
 
 mainLoop()

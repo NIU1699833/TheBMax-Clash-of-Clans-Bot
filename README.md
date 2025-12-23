@@ -27,10 +27,8 @@ An automated Python bot for farming resources in Clash of Clans using BlueStacks
 4. Improve console status prints
 5. Improve air defense recognition
 6. Slightly improve air defense logic (it will attempt to throw full amount of spells even if it doesn't have many remaining)
-7. Recognise profile? (and go down from there)
-8. Make Builder Village Bot
-9. Giant Village Bot?
-10. Remake main logic to make it simpler
-11. Make it run in background
-12. GUI to show status and select parameters
-13. Open BlueStacks on its own
+7. Make Builder Village Bot
+8. Giant Village Bot?
+9. Remake main logic to make it simpler
+10. Make it run in background
+11. GUI to show status and select parameters
