@@ -5,6 +5,7 @@ import random
 import pytesseract
 import math as m
 from config import PROFILES
+import os
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -62,7 +63,7 @@ def randomSleep(seconds):
     t.sleep(seconds + random.uniform(-modifier, modifier))
 
 def goldAmount():
-    gold = pytesseract.image_to_string(gui.screenshot(region=(140, 170, 170, 40)))
+    gold = pytesseract.image_to_string(gui.screenshot(region=(100, 150, 160, 40)))
     gold = gold.replace("o", "0").replace("l", "1")
     f = filter(str.isdecimal, gold)
     gold = "".join(f)
@@ -111,7 +112,7 @@ def waitToFind(imagePath):
             gui.locateOnScreen(imagePath, confidence=0.9)
             found = True
         except gui.ImageNotFoundException:
-            print(f"Could not find image {imagePath}. Waiting one second.")
+            print(f"Could not find {imagePath}. Waiting one second.")
             randomSleep(1)
 
 def switchAccounts(desiredProfile):
@@ -153,7 +154,53 @@ def locateAndClick(imagePath):
             randomSleep(1)
     gui.click(x, y)
 
+def openBluestacks():
+    if not gw.getWindowsWithTitle("BlueStacks App Player"):
+        os.startfile(r"C:\Users\Max\Desktop\Clash of Clans.lnk")
+        randomSleep(5)
+        focusBluestacks()
+        waitToFind("images/homeAttack.png")
+        print("Clash of Clans Opened!")
+    else:
+        closeBluestacks()
+        randomSleep(2)
+        openBluestacks()
+
+def closeBluestacks():
+    if gw.getWindowsWithTitle("BlueStacks App Player")[0]:
+        os.system("taskkill /f /im HD-Player.exe")
+        print("Closed Bluestacks!")
+    else:
+        print("Bluestacks is not open!")
+
+
+def attackLoop(profileData):
+    while detectFullStorages() == 1:
+        currentStatus = recogniseState()
+        match currentStatus:
+            case "Home Screen":
+                gui.press("z")
+            case "Find Match":
+                gui.press("x")
+            case "Attack Button":
+                gui.press("c")
+            case "In Attack":
+                if goldAmount() > profileData["minGold"]:
+                    basicAttack(profileData)
+                else:
+                    gui.press("b")
+            case "Attack Finished":
+                gui.press("v")
+            case "Reload Game":
+                locateAndClick("images/reloadGame.png")
+            case "Connection Lost":
+                locateAndClick("images/tryAgain.png")
+            case "unknown":
+                print("Waiting for known state...")
+        randomSleep(1)
+
 def mainLoop():
+    openBluestacks()
     startAccount = 1
     endAccount = 10
     accountNumber = startAccount
@@ -163,29 +210,7 @@ def mainLoop():
         profileData = PROFILES[f"TheBMax{accountNumber}"]
         print(f"Attacking on profile TheBMax{accountNumber}")
         randomSleep(5)
-        while detectFullStorages() == 1:
-            currentStatus = recogniseState()
-            match currentStatus:
-                case "Home Screen":
-                    gui.press("z")
-                case "Find Match":
-                    gui.press("x")
-                case "Attack Button":
-                    gui.press("c")
-                case "In Attack":
-                    if goldAmount() > profileData["minGold"]:
-                        basicAttack(profileData)
-                    else:
-                        gui.press("b")
-                case "Attack Finished":
-                    gui.press("v")
-                case "Reload Game":
-                    locateAndClick("images/reloadGame.png")
-                case "Connection Lost":
-                    locateAndClick("images/tryAgain.png")
-                case "unknown":
-                    print("Waiting for known state...")
-            randomSleep(1)
+        attackLoop(profileData)
         accountNumber += 1
 
 mainLoop()
