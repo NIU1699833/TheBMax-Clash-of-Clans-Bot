@@ -4,109 +4,19 @@ import pygetwindow as gw
 import random
 import pytesseract
 import math as m
-
-from tifffile.tifffile import sequence
+from config import PROFILES
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-PROFILES = {
-    "TheBMax1": {
-        "minGold": 750000,
-        "lightningLevel": 10,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3", "4"],
-        "heroBinds": ["5", "6", "7", "8", "9"],
-        "spellBind": "0"
-    },
-    "TheBMax2": {
-        "minGold": 750000,
-        "lightningLevel": 9,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5", "6", "7", "8"],
-        "spellBind": "9"
-    },
-    "TheBMax3": {
-        "minGold": 750000,
-        "lightningLevel": 9,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3", "4"],
-        "heroBinds": ["5", "6", "7", "8", "9"],
-        "spellBind": "0"
-    },
-    "TheBMax4": {
-        "minGold": 750000,
-        "lightningLevel": 9,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5", "6", "7", "8"],
-        "spellBind": "9"
-    },
-    "TheBMax5": {
-        "minGold": 750000,
-        "lightningLevel": 9,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5", "6", "7", "8"],
-        "spellBind": "9"
-    },
-    "TheBMax6": {
-        "minGold": 750000,
-        "lightningLevel": 9,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5", "6", "7"],
-        "spellBind": "8"
-    },
-    "TheBMax7": {
-        "minGold": 500000,
-        "lightningLevel": 8,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3", "4"],
-        "heroBinds": ["4", "5", "6", "7", "8"],
-        "spellBind": "9"
-    },
-    "TheBMax8": {
-        "minGold": 500000,
-        "lightningLevel": 7,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3", "4"],
-        "heroBinds": ["5", "6", "7"],
-        "spellBind": "8"
-    },
-    "TheBMax9": {
-        "minGold": 500000,
-        "lightningLevel": 7,
-        "lightningCapacity": 11,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5"],
-        "spellBind": "6"
-    },
-    "TheBMax10": {
-        "minGold": 250000,
-        "lightningLevel": 6,
-        "lightningCapacity": 9,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4", "5"],
-        "spellBind": "6"
-    },
-    "TheBMax11": {
-        "minGold": 250000,
-        "lightningLevel": 5,
-        "lightningCapacity": 7,
-        "troopBinds": ["1", "2", "3"],
-        "heroBinds": ["4"],
-        "spellBind": "5"
-    }
-}
-
 def recogniseState():
     foundState = 0
-    states = {"homeScreen": "images/homeAttack.png",
-              "findMatch": "images/findMatch.png",
-              "attackButton": "images/startAttack.png",
-              "inAttack": "images/nextEnemy.png",
-              "attackFinished": "images/returnHome.png"}
+    states = {"Home Screen": "images/homeAttack.png",
+              "Find Match": "images/findMatch.png",
+              "Attack Button": "images/startAttack.png",
+              "In Attack": "images/nextEnemy.png",
+              "Attack Finished": "images/returnHome.png",
+              "Reload Game": "images/reloadGame.png",
+              "Connection Lost": "images/tryAgain.png"}
     for state in states:
         try:
             gui.locateOnScreen(states[state], confidence=0.9)
@@ -125,15 +35,14 @@ def focusBluestacks():
     randomSleep(2)
 
 def basicAttack(profileData):
-    positions = ["a", "s", "d", "f", "g", "h", "j", "k", "l", "q"]
     heroPositions = ["a", "d", "g", "j", "l"]
     gui.keyDown("o")
     randomSleep(0.5)
     gui.keyUp("o")
-    airDefense(profileData["lightningLevel"], profileData["lightningCapacity"], profileData)
+    lightningRemaining = airDefense(profileData["lightningLevel"], profileData["lightningCapacity"], profileData)
     for troop in profileData["troopBinds"]:
         gui.press(troop)
-        for i in positions:
+        for i in profileData["positions"]:
             gui.press(i)
             randomSleep(0.5)
     currentPosition = 0
@@ -144,7 +53,7 @@ def basicAttack(profileData):
         randomSleep(0.5)
         currentPosition += 1
     gui.press(profileData["spellBind"])
-    for loop in range(11):
+    for loop in range(lightningRemaining):
         randomSleep(0.1)
         gui.press("w")
 
@@ -186,6 +95,7 @@ def airDefense(lightningLevel, lightningCapacity, data):
                 print(f"Couldn't find air defense level {defense}")
                 continue
         print(lowestLevelNotFound)
+    return lightningCapacity
 
 def detectFullStorages():
     if gui.pixelMatchesColor(1474, 83, (244, 221, 114)) and gui.pixelMatchesColor(1474, 173, (225, 141, 225)):
@@ -201,10 +111,11 @@ def waitToFind(imagePath):
             gui.locateOnScreen(imagePath, confidence=0.9)
             found = True
         except gui.ImageNotFoundException:
-            print("Could not find. Waiting one second.")
+            print(f"Could not find image {imagePath}. Waiting one second.")
             randomSleep(1)
 
 def switchAccounts(desiredProfile):
+    attempts = 0
     found = False
     waitToFind("images/homeAttack.png")
     gui.press("n")
@@ -214,7 +125,7 @@ def switchAccounts(desiredProfile):
     randomSleep(1)
 
     found = False
-    while not found:
+    while not found and attempts < 20:
         try:
             x, y = gui.locateCenterOnScreen(f"images/profiles/{desiredProfile}.png", confidence=0.9)
             gui.moveTo((x, y))
@@ -225,35 +136,56 @@ def switchAccounts(desiredProfile):
             gui.press("p")
             gui.press("p")
             randomSleep(0.5)
+            attempts += 1
             continue
+    if not found:
+        print(f"CRITICAL: Could not find profile {desiredProfile}. Stopping script (in future, add logic to restart game)")
+
+def locateAndClick(imagePath):
+    found = False
+    x, y = 0, 0
+    while not found:
+        try:
+            x, y = gui.locateCenterOnScreen(imagePath, confidence=0.9)
+            found = True
+        except gui.ImageNotFoundException:
+            print(f"Could not find image {imagePath}. Waiting one second.")
+            randomSleep(1)
+    gui.click(x, y)
+
 def mainLoop():
-    accountNumber = 1
+    startAccount = 1
+    endAccount = 10
+    accountNumber = startAccount
     focusBluestacks()
-    while accountNumber <= 11:
+    while accountNumber <= endAccount:
         switchAccounts(f"TheBMax{accountNumber}")
         profileData = PROFILES[f"TheBMax{accountNumber}"]
         print(f"Attacking on profile TheBMax{accountNumber}")
+        randomSleep(5)
         while detectFullStorages() == 1:
             currentStatus = recogniseState()
             match currentStatus:
-                case "homeScreen":
+                case "Home Screen":
                     gui.press("z")
-                case "findMatch":
+                case "Find Match":
                     gui.press("x")
-                case "attackButton":
+                case "Attack Button":
                     gui.press("c")
-                case "inAttack":
+                case "In Attack":
                     if goldAmount() > profileData["minGold"]:
                         basicAttack(profileData)
                     else:
                         gui.press("b")
-                case "attackFinished":
+                case "Attack Finished":
                     gui.press("v")
+                case "Reload Game":
+                    locateAndClick("images/reloadGame.png")
+                case "Connection Lost":
+                    locateAndClick("images/tryAgain.png")
                 case "unknown":
                     print("Waiting for known state...")
             randomSleep(1)
         accountNumber += 1
 
-
-focusBluestacks()
 mainLoop()

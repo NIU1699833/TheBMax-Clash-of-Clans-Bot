@@ -19,3 +19,18 @@ An automated Python bot for farming resources in Clash of Clans using BlueStacks
 1.  Install dependencies: `pip install pyautogui pygetwindow pytesseract opencv-python`
 2.  Configure `tesseract_cmd` path in the script.
 3.  Ensure your `images/` folder contains the required reference screenshots (Air Defenses, UI buttons, Profile icons).
+
+## Features to Add
+1. Keep in mind amount of lightning used before dumping.
+2. Filter villages by Elixir and DE also, and attack depending on what storages are full. 
+3. Notification bots which sends status updates and screenshots
+4. Improve console status prints
+5. Improve air defense recognition
+6. Slightly improve air defense logic (it will attempt to throw full amount of spells even if it doesn't have many remaining)
+7. Recognise profile? (and go down from there)
+8. Make Builder Village Bot
+9. Giant Village Bot?
+10. Remake main logic to make it simpler
+11. Make it run in background
+12. GUI to show status and select parameters
+13. Open BlueStacks on its own
